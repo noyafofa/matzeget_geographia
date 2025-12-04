@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ליקוי חמה - מצגת לימודית מלאה ומשחק</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* CSS Reset & Basic Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none; /* Prevent text selection for app-feel */
+        }
+
+        body {
+            background-color: #050510; /* Deep Space Black */
+            color: #e2e8f0;
+            font-family: 'Heebo', sans-serif;
+            height: 100vh;
+            /* Fix for mobile browsers address bar */
+            height: 100dvh; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            transition: background-color 0.5s;
+        }
+
+        /* --- INTERACTIVE BACKGROUND ECLIPSE --- */
+        #cosmos-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Behind slide deck */
+            pointer-events: none; 
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 2px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 3px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
+            transition: opacity 0.5s;
+        }
+
+        /* The Sun Container in Background */
+        .bg-sun-container {
+            position: absolute;
+            top: 50%; /* Centered vertically by default */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            filter: blur(0px);
+            transition: top 0.3s ease;
+        }
+
+        .bg-sun {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, #fff 30%, #fbbf24 70%, #f59e0b 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 60px 20px rgba(251, 191, 36, 0.6), 0 0 100px 40px rgba(245, 158, 11, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .bg-moon {
+            width: 178px;
+            height: 178px;
+            background-color: #050510; /* Match deep space color */
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-250%, -50%); /* Start position: Left */
+            z-index: 2;
+            box-shadow: inset -10px -5px 20px rgba(255,255,255,0.05);
+            /* Moving controlled by JS */
+        }
+
+        /* Corona Effect */
+        .bg-corona {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 0 50px 10px rgba(255, 255, 255, 0.8), 
+                        0 0 100px 30px rgba(100, 200, 255, 0.5),
+                        0 0 180px 60px rgba(100, 200, 255, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 3s ease;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* --- SLIDE DECK (Responsive Container) --- */
+        .slide-deck {
+            position: relative;
+            width: 100%;
+            max-width: 1280px; /* Limit width on large screens */
+            height: 100%;
+            max-height: 720px; /* Limit height on large screens */
+            background: rgba(20, 20, 40, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            box-shadow: 0 0 60px rgba(0, 100, 255, 0.15);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 40px 60px;
+            flex-direction: column;
+            animation: fadeIn 0.6s ease;
+            overflow-y: auto; /* Enable scrolling for small screens */
+            overflow-x: hidden;
+            position: relative; 
+            scrollbar-width: thin; /* Firefox */
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        /* Scrollbar styling */
+        .slide::-webkit-scrollbar, .text-box::-webkit-scrollbar, .facts-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .slide::-webkit-scrollbar-track, .text-box::-webkit-scrollbar-track, .facts-container::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .slide::-webkit-scrollbar-thumb, .text-box::-webkit-scrollbar-thumb, .facts-container::-webkit-scrollbar-thumb {
+            background: #60a5fa;
+            border-radius: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.99); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Typography & Layout Adjustments */
+        h1, h2, h3 {
+            font-family: 'Rubik', sans-serif;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
+        h1 { font-size: clamp(36px, 5vw, 58px); font-weight: 700; margin-bottom: 10px; text-align: center; }
+        h2 { font-size: clamp(24px, 3vw, 36px); border-bottom: 2px solid #fbbf24; padding-bottom: 10px; display: inline-block; }
+        h3 { font-size: clamp(18px, 2.5vw, 24px); color: #60a5fa; margin-top: 10px; margin-bottom: 5px; }
+        p, li { font-size: clamp(16px, 1.5vw, 20px); line-height: 1.5; margin-bottom: 10px; color: #f1f5f9; }
+        
+        ul, ol { padding-right: 20px; }
+        ul li::marker { color: #fbbf24; }
+
+        /* Compact Text Helper Classes */
+        .text-compact p, .text-compact li {
+            font-size: clamp(14px, 1.4vw, 18px);
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .text-compact h2 { font-size: 32px; margin-bottom: 10px; }
+        .text-x-compact p, .text-x-compact li {
+            font-size: 16px;
+            margin-bottom: 6px;
+            line-height: 1.25;
+        }
+
+        /* Layouts */
+        .content-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            height: 100%;
+            align-items: center;
+        }
+        
+        .content-split.reverse { grid-template-columns: 0.8fr 1.2fr; }
+
+        .content-full {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            min-height: 100%; /* Changed from height to min-height for scroll */
+        }
+
+        /* Box Styles */
+        .text-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            border-radius: 15px;
+            border-right: 4px solid #60a5fa;
+            height: auto; /* Changed from 100% to auto */
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* Images */
+        .img-placeholder {
+            width: 100%;
+            height: 200px;
+            background: #1e293b;
+            border: 2px dashed #475569;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-family: monospace;
+            text-align: center;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+            cursor: zoom-in;
+            flex-shrink: 0;
+        }
+
+        .img-placeholder:hover {
+            transform: scale(1.02);
+            border-color: #60a5fa;
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.3);
+        }
+        
+        .img-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .img-square {
+            aspect-ratio: 1 / 1;
+            height: auto;
+            width: 100%;
+        }
+
+        /* Facts Grid */
+        .facts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            height: auto;
+            align-content: center;
+            padding-bottom: 60px; /* Space for Nav */
+        }
+
+        .fact-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fact-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #60a5fa;
+            min-width: 30px;
+        }
+        
+        .fact-content h4 {
+            color: #fbbf24;
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+        
+        .fact-content p {
+            font-size: 14px;
+            margin-bottom: 0;
+            line-height: 1.2;
+        }
+
+        .fact-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(96, 165, 250, 0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #fbbf24;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+            background: rgba(20, 20, 40, 0.9);
+            padding: 10px;
+            border-radius: 50px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            border: none;
+            color: white;
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-family: 'Rubik', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            white-space: nowrap;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+        
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            opacity: 0.5;
+        }
+
+        .slide-counter {
+            position: absolute;
+            bottom: 25px;
+            right: 40px;
+            font-family: 'Rubik', sans-serif;
+            color: #94a3b8;
+            font-size: 18px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 101;
+        }
+
+        /* --- GAME MODE STYLES --- */
+        .game-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            z-index: 200;
+            flex-direction: column;
+            padding: 30px;
+            overflow-y: auto; /* Allow game scroll on mobile */
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            flex-shrink: 0;
+        }
+
+        .game-money-ladder {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-shrink: 0;
+        }
+
+        .money-step {
+            font-size: 14px;
+            color: #64748b;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+
+        .money-step.active {
+            color: #fbbf24;
+            background: rgba(251, 191, 36, 0.2);
+            font-weight: bold;
+            transform: scale(1.1);
+            border: 1px solid #fbbf24;
+        }
+        
+        .money-step.completed {
+            color: #22c55e;
+            text-decoration: line-through;
+        }
+
+        .question-box {
+            background: rgba(0,0,0,0.4);
+            border: 2px solid #60a5fa;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            font-size: 28px;
+            color: white;
+            margin-bottom: 40px;
+            box-shadow: 0 0 30px rgba(96, 165, 250, 0.2);
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 80%;
+            margin: 0 auto 60px auto;
+        }
+
+        .answer-btn {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #475569;
+            color: white;
+            padding: 20px;
+            border-radius: 50px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .answer-letter {
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 24px;
+            min-width: 30px;
+        }
+
+        .answer-btn:hover {
+            border-color: #fbbf24;
+            transform: scale(1.02);
+        }
+        
+        .answer-btn:active {
+            transform: scale(0.95);
+        }
+
+        .answer-btn.correct {
+            background: #22c55e !important;
+            border-color: #4ade80 !important;
+            animation: pulse 0.5s;
+        }
+
+        .answer-btn.wrong {
+            background: #ef4444 !important;
+            border-color: #f87171 !important;
+            animation: shake 0.5s;
+        }
+
+        /* Choice Screen */
+        .choice-card-container {
+            display: flex;
+            gap: 50px;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            padding-bottom: 60px;
+            flex-wrap: wrap; /* Wrap on mobile */
+        }
+
+        .choice-card {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            width: 350px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .choice-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255,255,255,0.1);
+            border-color: #60a5fa;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .choice-icon { font-size: 80px; margin-bottom: 30px; color: #fbbf24; }
+        .choice-title { font-size: 32px; font-weight: bold; margin-bottom: 15px; color: white; }
+        .choice-desc { font-size: 18px; color: #94a3b8; }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .lightbox-content {
+            max-width: 95%;
+            max-height: 80vh;
+            border: 2px solid #60a5fa;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(96, 165, 250, 0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes spin { 
+            100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } 
+        }
+
+        /* Helpers */
+        .highlight { color: #fbbf24; font-weight: bold; }
+        .danger { color: #ef4444; font-weight: bold; }
+        .safe { color: #22c55e; font-weight: bold; }
+
+        /* --- MOBILE RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 1200px) {
+            .slide-deck { width: 95%; height: 95vh; }
+        }
+
+        @media (max-width: 768px) {
+            /* General Mobile Layout */
+            .slide-deck {
+                width: 100%;
+                height: 100vh;
+                height: 100dvh;
+                max-width: none;
+                max-height: none;
+                border-radius: 0;
+                border: none;
+            }
+            
+            .slide {
+                padding: 20px;
+                padding-bottom: 80px; /* Space for nav buttons */
+            }
+
+            .content-split, .content-split.reverse {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                height: auto;
+            }
+
+            /* Adjust background sun position so text is readable */
+            .bg-sun-container {
+                top: 20%;
+                opacity: 0.6; /* Dim it slightly on mobile */
+            }
+
+            /* Grid Adjustments */
+            .facts-container {
+                grid-template-columns: 1fr; /* Stack facts */
+                gap: 10px;
+            }
+            
+            /* Slide 3 Grid */
+            #slide3 > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+
+            /* Slide 5 Grid */
+            #slide5 > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+                height: auto !important;
+            }
+            
+            #slide9 > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            /* Step 1 Flex Box */
+            #slide2 > div[style*="display: flex"] {
+                flex-direction: column;
+                height: auto !important;
+                gap: 20px;
+            }
+            #slide2 > div > div {
+                width: 100% !important;
+                margin-bottom: 20px;
+            }
+
+            /* Text Sizes */
+            .text-box { 
+                padding: 15px; 
+                height: auto;
+            }
+            
+            h1 { font-size: 36px; }
+            h2 { font-size: 24px; }
+            p, li { font-size: 16px; }
+
+            /* Navigation & Counters */
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+                border-radius: 0;
+                background: #141428;
+                border-top: 1px solid rgba(255,255,255,0.1);
+                bottom: 0;
+                padding: 15px;
+            }
+            
+            .slide-counter {
+                top: 20px;
+                right: 20px;
+                bottom: auto;
+                font-size: 14px;
+            }
+
+            /* Game Mobile */
+            .game-money-ladder {
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 10px;
+                width: 100%;
+                white-space: nowrap;
+            }
+            .money-step { flex-shrink: 0; }
+            .answers-grid {
+                grid-template-columns: 1fr;
+                width: 100%;
+                margin-bottom: 100px;
+            }
+            .question-box {
+                font-size: 20px;
+                padding: 20px;
+                margin-top: 10px;
+            }
+            
+            /* Choice Cards Mobile */
+            .choice-card-container {
+                display: flex;
+                flex-direction: column;     /* כפתורים אחד מתחת לשני */
+                justify-content: flex-start;
+                align-items: stretch;       /* שלא ייחתכו במרכז */
+                gap: 20px;
+                height: auto;               /* לא 100% בגובה */
+                padding-bottom: 20px;       /* קצת ריווח מלמטה */
+            }
+            
+            .choice-card {
+                width: 100%;                /* כל כפתור רוחב מלא */
+                max-width: 100%;
+                padding: 20px;
+                margin: 0;
+            }
+
+            .choice-icon { font-size: 50px; margin-bottom: 10px; }
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- BACKGROUND ECLIPSE LAYER -->
+<div id="cosmos-bg">
+    <div class="bg-sun-container">
+        <div class="bg-sun"></div>
+        <div class="bg-corona"></div>
+        <div class="bg-moon" id="bgMoon"></div>
+    </div>
+</div>
+
+<div class="slide-deck">
+<!-- SLIDE 1: Intro (Cover) -->
+<div class="slide active" id="slide1">
+    <div class="content-full">
+        <i class="fa-regular fa-sun" style="font-size: 100px; color: #fbbf24; animation: spin 20s linear infinite; margin-bottom: 20px;"></i>
+        <h1>ליקוי חמה</h1>
+        <h2 style="border: none; color: #93c5fd;">מצגת לימודית</h2>
+
+        <!-- שם וכיתה -->
+        <div style="margin-top: 20px; font-size: 22px;">
+            <p>נויה פורת שבתייב</p>
+            <p>כיתה ז4</p>
+        </div>
+
+        <div style="margin-top: 40px; font-size: 24px;">
+            <p>שלב אחר שלב</p>
+            <p style="font-size: 16px; opacity: 0.7;">הזיזו את האצבע או העכבר כדי לשלוט בליקוי ברקע!</p>
+        </div>
+    </div>
+</div>
+
+    <!-- SLIDE 2: Step 1 (Basics) -->
+    <div class="slide" id="slide2">
+        <h2 style="text-align: center;">שלב 1: הבסיס</h2>
+        <div style="display: flex; justify-content: space-around; height: 80%; align-items: center;">
+            
+            <!-- Solar Eclipse Column -->
+            <div style="width: 30%; height: auto; text-align: center; background: rgba(0,0,0,0.3); padding: 30px; border-radius: 10px;">
+                <h3 class="highlight">בליקוי חמה</h3>
+                <p>הסדר הוא:</p>
+                <p style="font-size: 24px; font-weight: bold;">שמש → ירח → כדור הארץ</p>
+                <!-- PLACEHOLDER IMAGE 1 -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 220px;">
+                    <img src="https://www.nasa.gov/wp-content/uploads/2023/03/solar-eclipse-diagram.jpg?w=1041" alt="סדר ליקוי חמה">
+                </div>
+            </div>
+
+            <!-- Lunar Eclipse Column -->
+            <div style="width: 30%; height: auto; text-align: center; background: rgba(0,0,0,0.3); padding: 30px; border-radius: 10px;">
+                <h3 class="highlight">בליקוי לבנה</h3>
+                <p>הסדר הוא:</p>
+                <p style="font-size: 24px; font-weight: bold;">שמש → כדור הארץ → ירח</p>
+                <!-- PLACEHOLDER IMAGE 2 -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 220px;">
+                      <img src="https://www.nasa.gov/wp-content/uploads/2023/03/lunar-eclipse-diagram_0.jpg?w=1041" alt="סדר ליקוי לבנה">
+                </div>
+            </div>
+
+            <!-- Illusion Column -->
+            <div style="width: 30%; height: auto; text-align: center; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px;">
+                <h3 class="highlight">האשליה</h3>
+                <p>השמש גדולה פי 400, אבל גם רחוקה פי 400 → ולכן שתי הדיסקות נראות כמעט באותו גודל בשמיים!</p>
+                <!-- PLACEHOLDER IMAGE 3 -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 220px;">
+                    <img src="https://www.phy.cuhk.edu.hk/elearning/Solar_eclipse/images/Eclipse-Apprent%20sizes.png" alt="השוואת גדלים">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SLIDE 3: Step 2 (Types) -->
+    <div class="slide" id="slide3">
+        <h2>שלב 2: סוגי הליקויים</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+            
+            <div class="text-box" style="text-align: center;">
+                <h3 class="highlight">ליקוי מלא</h3>
+                <p>הירח מכסה לחלוטין את פני השמש</p>
+                <!-- Image for Total -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://www.nasa.gov/wp-content/uploads/2018/08/eclipsedruckmuller.jpg" alt="ליקוי מלא">
+                </div>
+            </div>
+
+            <div class="text-box" style="text-align: center;">
+                <h3 class="highlight">ליקוי חלקי</h3>
+                <p>הירח מכסה רק חלק מהשמש</p>
+                <!-- Image for Partial -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://cloudfront-us-east-1.images.arcpublishing.com/opb/P46WQF7ZQJJNJMQ67NWJXBLTSY.jpg" alt="ליקוי חלקי">
+                </div>
+            </div>
+
+            <div class="text-box" style="text-align: center;">
+                <h3 class="highlight">ליקוי טבעתי</h3>
+                <p>הירח נמצא מול השמש אך רחוק מדי מכדור הארץ</p>
+                <!-- Image for Annular -->
+                <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://s.abcnews.com/images/GMA/annular-eclipse-1-gty-gmh-231002_1696279875713_hpMain_1x1_608.jpg" alt="ליקוי טבעתי">
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 20px; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+            <p>ליקוי שמש מכל סוג קורה רק בזמן מולד הירח (כשהירח נמצא בדיוק בין השמש לכדור הארץ.)</p>
+            <p>אבל לא בכל מולד יש ליקוי</p>
+            <p><strong>התנאי הכללי לליקוי שמש:</strong> מולד ירח (ירח חדש)</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: Step 3 (Orbit Tilt) -->
+    <div class="slide" id="slide4">
+        <div class="content-split">
+            <div class="text-box">
+                <h2>שלב 3: למה לא כל חודש?</h2>
+                <p>מסלול הירח סביב כדור הארץ <strong>נטוי בכ־5°</strong> ביחס למישור שבו כדור הארץ מקיף את השמש.</p>
+                <p>בגלל הנטייה הזאת — בחלק גדול מהמולדים, הירח נמצא קצת מעל או קצת מתחת לקו שבין כדור הארץ לשמש.</p>
+                <p>לכן הצל שלו חולף מעל או מתחת לכדור הארץ ולא נוגע בו.</p>
+                <p class="highlight">הירח קרוב לאחד משני צמתים – הנקודות שבהן המסלול שלו חוצה את מישור כדור הארץ.</p>
+            </div>
+            <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 400px;">
+                <img src="https://letstalkscience.ca/sites/default/files/2023-01/moon%20orbit%20tilt.png" alt="מסלול הירח">
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: Step 3 (Solar Details) - COMPACT FOR NO SCROLL -->
+    <div class="slide" id="slide5">
+        <h2>מתי זה קורה? פירוט</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; font-size: 14px; height: 85%;">
+            
+            <div class="text-box text-x-compact" style="justify-content: flex-start; padding: 15px;">
+                <h3 style="margin-bottom:5px;">🌑 ליקוי שמש מלא</h3>
+                <div style="flex-grow: 1; display:flex; flex-direction:column; justify-content:center;">
+                    <p><strong>מתי?</strong> ירח במולד, בצומת וקרוב, מכסה את השמש.</p>
+                    <p><strong>תדירות:</strong> בערך פעם ב-18 חודשים בעולם.</p>
+                </div>
+                <div class="img-placeholder img-square" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://www.nasa.gov/wp-content/uploads/2018/08/eclipsedruckmuller.jpg" alt="Total">
+                </div>
+            </div>
+
+            <div class="text-box text-x-compact" style="justify-content: flex-start; padding: 15px;">
+                <h3 style="margin-bottom:5px;">🌘 ליקוי שמש חלקי</h3>
+                <div style="flex-grow: 1; display:flex; flex-direction:column; justify-content:center;">
+                    <p><strong>מתי?</strong> נלווה לליקוי מלא/טבעתי או כשהירח לא מספיק קרוב לצומת.</p>
+                    <p><strong>תדירות:</strong> מספר פעמים בשנה.</p>
+                </div>
+                <div class="img-placeholder img-square" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://cloudfront-us-east-1.images.arcpublishing.com/opb/P46WQF7ZQJJNJMQ67NWJXBLTSY.jpg" alt="Partial">
+                </div>
+            </div>
+
+            <div class="text-box text-x-compact" style="justify-content: flex-start; padding: 15px;">
+                <h3 style="margin-bottom:5px;">🔆 ליקוי שמש טבעתי</h3>
+                <div style="flex-grow: 1; display:flex; flex-direction:column; justify-content:center;">
+                    <p><strong>מתי?</strong> הירח רחוק מדי מכדור הארץ (אפוגיאה) וקטן מכדי להסתיר את השמש.</p>
+                    <p><strong>תדירות:</strong> בערך פעם ב-18 חודשים.</p>
+                </div>
+                <div class="img-placeholder img-square" onclick="openLightbox(this.querySelector('img').src)">
+                    <img src="https://s.abcnews.com/images/GMA/annular-eclipse-1-gty-gmh-231002_1696279875713_hpMain_1x1_608.jpg" alt="Annular">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: Step 3 (Lunar Eclipse) -->
+    <div class="slide" id="slide6">
+        <div class="content-split">
+            <div class="text-box">
+                <h2>🌕 מתי קורה ליקוי ירח?</h2>
+                <p>ליקוי ירח קורה רק בזמן <strong>ירח מלא</strong>, כשהירח נכנס לצל של כדור הארץ:</p>
+                <ul style="font-size: 24px; margin: 20px 0;">
+                    <li>ירח מלא + הירח בצומת ⇒ <strong>ליקוי ירח</strong></li>
+                    <li>אם עובר רק בחלק מהצל ⇒ <strong>חלקי</strong></li>
+                    <li>אם נכנס רק בצללום ⇒ <strong>ליקוי עמרי (penumbral)</strong></li>
+                </ul>
+            </div>
+            <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 400px;">
+                 <img src="https://cdn.mos.cms.futurecdn.net/ANWuzLDArpYzCXDunpvsdL.jpg" alt="ליקוי ירח">
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: Step 4 (History & Fear) - COMPACT -->
+    <div class="slide" id="slide7">
+        <h2>שלב 4: היסטוריה ומיתוסים</h2>
+        <div class="content-split text-compact">
+            <div class="text-box">
+                <p>במהלך ההיסטוריה ליקוי חמה היה אירוע מפחיד ומסתורי. הקדמונים ראו בו אות רע:</p>
+                <ul style="margin-bottom:10px;">
+                    <li>חשבו שהעולם נגמר, בכו והתחננו לאלים.</li>
+                    <li>הכו בתופים להבריח את ה"מפלצת".</li>
+                </ul>
+                <p><strong>אמונות עממיות:</strong></p>
+                <ul>
+                    <li><strong>סין:</strong> דרקון בולע את השמש.</li>
+                    <li><strong>וייטנאם:</strong> צפרדע שמימית.</li>
+                    <li><strong>ויקינגים:</strong> זאב שמימי.</li>
+                    <li><strong>הודו:</strong> השד רהו נוקם.</li>
+                </ul>
+            </div>
+            <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 100%;">
+                <img src="https://api.time.com/wp-content/uploads/2017/08/solar-eclipse-scare.jpg" alt="מיתוס הדרקון">
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: Step 4 (History & Science) - COMPACT -->
+    <div class="slide" id="slide8">
+        <h2>מפחד להבנה</h2>
+        <div class="content-split reverse text-compact">
+            <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 100%;">
+                 <img src="https://i.imgur.com/HbXaKWM.jpeg" alt="אסטרונומים עתיקים">
+            </div>
+            <div class="text-box">
+                <p>רבים חשבו שהאל כועס, הקריבו קורבנות ומלכים פחדו מנפילתם.</p>
+                <h3 class="highlight">אבל המדענים הקדומים הבינו:</h3>
+                <ul>
+                    <li><strong>הבבלים:</strong> חישבו מחזורי ליקויים לפני 2,500 שנה.</li>
+                    <li><strong>היוונים (תלס):</strong> הבינו את הגאומטריה.</li>
+                    <li><strong>סין העתיקה:</strong> אסטרונומים חזו ליקויים (ונענשו אם טעו).</li>
+                </ul>
+                <p>כך, בזמן שהציבור נבהל, המדענים החלו להבין את המנגנון האמיתי.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: Step 5 (Dates) -->
+    <div class="slide" id="slide9">
+        <div class="content-full">
+            <h2>שלב 5: תאריכים חשובים</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 30px; text-align: right;">
+                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                    <h3 style="color: #60a5fa;">הליקוי החלקי הקרוב ביותר</h3>
+                    <p style="font-size: 30px; font-weight: bold;">ביום ‎2 באוגוסט 2027</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px;">
+                    <h3 style="color: #94a3b8;">הליקוי החלקי האחרון היה</h3>
+                    <p style="font-size: 30px; font-weight: bold;">ביום 25 באוקטובר 2022</p>
+                </div>
+            </div>
+            <div style="margin-top: 40px; background: rgba(251, 191, 36, 0.1); padding: 30px; border-radius: 15px; width: 80%;">
+                <p>הליקוי המלא האחרון שיכל היה להיראות מישראל נערך ב־<strong>21 באוגוסט 1933</strong>.</p>
+                <p class="highlight" style="font-size: 28px;">הליקוי המלא הבא שייראה מישראל לא צפוי לפני ‎2180-2240(!!!!!!!!!!!!!)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 10: Step 6 (Safety Problem) -->
+    <div class="slide" id="slide10">
+        <div class="content-full">
+            <h2 class="danger">שלב 6: הסכנה</h2>
+            <div style="text-align: right; max-width: 900px;">
+                <h3>הבעיה: האישון נפתח — אבל הקרינה נשארת חזקה</h3>
+                <p>העין חושבת שהאור נחלש → האישון נפתח כדי להכניס יותר אור.</p>
+                <p><strong>אבל:</strong> גם כששמש מוסתרת חלקית היא עדיין פולטת קרני UV ו-IR חזקות מאוד.</p>
+                
+                <div style="border: 2px solid #ef4444; padding: 20px; border-radius: 10px; margin: 20px 0; background: rgba(239, 68, 68, 0.1);">
+                    <p style="font-weight: bold; font-size: 22px;">תוצאה: Solar Retinopathy — “כווייה של הרשתית”</p>
+                    <ul>
+                        <li>תאי הרשתית ניזוקים מהחום ומהקרינה באופן קבוע.</li>
+                        <li><strong>והכי בעייתי:</strong> זה לא כואב באותו רגע (אין קולטני כאב ברשתית).</li>
+                    </ul>
+                </div>
+
+                <h3>האם ליקוי ירח מסוכן לעיניים? לא!</h3>
+                <p class="highlight">ליקוי ירח = בטוח לחלוטין | ליקוי חמה = מסוכן מאוד!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 11: Step 6 (Safety Solution) - COMPACT -->
+    <div class="slide" id="slide11">
+        <div class="content-split text-compact">
+            <div class="text-box">
+                <h2 class="safe">אז מה בטוח?</h2>
+                <p><strong>משקפי שמש רגילים אסורים בהחלט!</strong> הם רק מפחיתים סנוור ולא חוסמים UV/IR, מה שגורם לאישון להיפתח ולקלוט עוד קרינה.</p>
+                <h3 class="safe">אמצעי הגנה מותרים:</h3>
+                <ul>
+                    <li>משקפי ליקוי חמה עם תקן <strong>ISO 12312-2</strong>.</li>
+                    <li>זכוכית רתכים מספר 14 ומעלה.</li>
+                    <li>הקרנה (Pinhole) על דף/רצפה.</li>
+                    <li>צפייה לא ישירה בלבד.</li>
+                </ul>
+                <p style="margin-top:15px; font-size:16px;">זכרו: אין כזה דבר "משקפי שמש חזקים במיוחד".</p>
+            </div>
+            <div class="img-placeholder" onclick="openLightbox(this.querySelector('img').src)" style="height: 100%;">
+                <img src="https://i.imgur.com/xpBoXpk.jpeg" alt="משקפי ליקוי חמה">
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 12: CHOICE SCREEN -->
+    <div class="slide" id="slide12">
+        <div class="content-full">
+            <h1 style="font-size: 50px; margin-bottom: 50px;">איך תרצו להמשיך?</h1>
+            <div class="choice-card-container">
+                <!-- Option 1: Presentation -->
+                <div class="choice-card" onclick="goToSlides()">
+                    <div class="choice-icon"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="choice-title">מצגת בלבד</div>
+                    <div class="choice-desc">המשך הצגת העובדות כשקפים רגילים</div>
+                </div>
+                
+                <!-- Option 2: Game -->
+                <div class="choice-card" onclick="startGame()">
+                    <div class="choice-icon"><i class="fa-solid fa-gamepad"></i></div>
+                    <div class="choice-title">משחק הטריוויה</div>
+                    <div class="choice-desc">חידון "מי רוצה להיות מיליונר" על כל העובדות</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 13: Solar Facts Part A - COMPACT GRID -->
+    <div class="slide" id="slide13">
+        <h2>שלב 7: עובדות על ליקוי חמה (חלק א')</h2>
+        <div class="facts-container">
+            <div class="fact-card"><span class="fact-number">1</span><div class="fact-icon"><i class="fa-solid fa-scale-balanced"></i></div><div class="fact-content"><h4>גודל זהה במקרה</h4><p>השמש גדולה פי 400 אך רחוקה פי 400 - צירוף מקרים קוסמי.</p></div></div>
+            <div class="fact-card"><span class="fact-number">2</span><div class="fact-icon" style="color:#60a5fa;"><i class="fa-solid fa-compress-arrows-alt"></i></div><div class="fact-content"><h4>הצל של הירח זעיר</h4><p>רצועת הצל המלא היא ברוחב 100-200 ק"מ בלבד.</p></div></div>
+            <div class="fact-card"><span class="fact-number">3</span><div class="fact-icon" style="color:#ef4444;"><i class="fa-solid fa-stopwatch"></i></div><div class="fact-content"><h4>קצר מאוד</h4><p>ליקוי מלא נמשך לרוב 2-3 דקות (שיא 7.5 דקות).</p></div></div>
+            <div class="fact-card"><span class="fact-number">4</span><div class="fact-icon" style="color:#fbbf24;"><i class="fa-solid fa-star"></i></div><div class="fact-content"><h4>רואים כוכבים וקורונה</h4><p>היום הופך ללילה ורואים את הילה השמש היפה.</p></div></div>
+            <div class="fact-card"><span class="fact-number">5</span><div class="fact-icon" style="color:#22c55e;"><i class="fa-solid fa-dove"></i></div><div class="fact-content"><h4>בעלי חיים מתבלבלים</h4><p>ציפורים שותקות והולכות לישון, חרקים יוצאים.</p></div></div>
+            <div class="fact-card"><span class="fact-number">6</span><div class="fact-icon" style="color:#3b82f6;"><i class="fa-solid fa-temperature-arrow-down"></i></div><div class="fact-content"><h4>התקררות ורוח</h4><p>ירידה של 2-5 מעלות ושינוי כיוון הרוח.</p></div></div>
+            <div class="fact-card"><span class="fact-number">7</span><div class="fact-icon" style="color:#a855f7;"><i class="fa-solid fa-atom"></i></div><div class="fact-content"><h4>הוכחת איינשטיין (1919)</h4><p>הוכח שהאור מתעקם בגלל כבידה בזמן ליקוי.</p></div></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 14: Solar Facts Part B (RESTORED FULL TEXT) -->
+    <div class="slide" id="slide14">
+        <h2>שלב 7: עוד עובדות על ליקוי חמה (חלק ב')</h2>
+        <div class="facts-container">
+            <div class="fact-card"><span class="fact-number">8</span><div class="fact-icon" style="color:#fbbf24;"><i class="fa-solid fa-arrows-spin"></i></div><div class="fact-content"><h4>ליקויים מגיעים במחזורים</h4><p>חלק מהמחזורים נקראים סארוס — מחזור של כ־18 שנים, 11 ימים ו־8 שעות.</p></div></div>
+            <div class="fact-card"><span class="fact-number">9</span><div class="fact-icon" style="color:#60a5fa;"><i class="fa-regular fa-calendar-days"></i></div><div class="fact-content"><h4>יש ליקוי מלא כל 18 חודשים</h4><p>אבל נדיר מאוד באותו מקום (פעם במאות שנים).</p></div></div>
+            <div class="fact-card"><span class="fact-number">10</span><div class="fact-icon" style="color:#f97316;"><i class="fa-regular fa-circle-dot"></i></div><div class="fact-content"><h4>מלא מול טבעתי</h4><p>תלוי במרחק הירח: רחוק=טבעתי, קרוב=מלא.</p></div></div>
+            <div class="fact-card"><span class="fact-number">11</span><div class="fact-icon" style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="fact-content"><h4>השמש תמיד מסוכנת</h4><p>הליקוי לא מגביר קרינה, רק גורם לאנשים להביט בטעות.</p></div></div>
+            <div class="fact-card"><span class="fact-number">12</span><div class="fact-icon" style="color:#eab308;"><i class="fa-solid fa-grip-lines-vertical"></i></div><div class="fact-content"><h4>חרוזי ביילי</h4><p>ניצוצות אור המציצים דרך העמקים בירח רגע לפני השיא.</p></div></div>
+            <div class="fact-card"><span class="fact-number">13</span><div class="fact-icon" style="color:#0ea5e9;"><i class="fa-regular fa-gem"></i></div><div class="fact-content"><h4>טבעת יהלום</h4><p>הרגע שבו כמעט הכול מכוסה חוץ מנקודה נוצצת אחת.</p></div></div>
+        </div>
+    </div>
+
+    <!-- SLIDE 15: Step 7 (Lunar Facts) -->
+    <div class="slide" id="slide15">
+        <h2>עובדות על ליקוי ירח</h2>
+        <div class="facts-container">
+            <div class="fact-card"><span class="fact-number">1</span><div class="fact-icon"><i class="fa-solid fa-moon"></i></div><div class="fact-content"><h4>רק בירח מלא</h4><p>כשהירח עובר בצל כדור הארץ.</p></div></div>
+            <div class="fact-card"><span class="fact-number">2</span><div class="fact-icon" style="color:#22c55e; background:rgba(34,197,94,0.15);"><i class="fa-solid fa-eye"></i></div><div class="fact-content"><h4>בטוח לצפייה</h4><p>אפשר להסתכל בעיניים חשופות בלי הגנה.</p></div></div>
+            <div class="fact-card"><span class="fact-number">3</span><div class="fact-icon" style="color:#ef4444; background:rgba(239,68,68,0.15);"><i class="fa-solid fa-circle"></i></div><div class="fact-content"><h4>הירח הופך לאדום</h4><p>בגלל שבירת אור באטמוספירה (כמו שקיעה).</p></div></div>
+            <div class="fact-card"><span class="fact-number">4</span><div class="fact-icon" style="color:#94a3b8;"><i class="fa-solid fa-eye-slash"></i></div><div class="fact-content"><h4>לפעמים כהה מאוד</h4><p>כשנכנס עמוק לצל, כמעט נעלם.</p></div></div>
+            <div class="fact-card"><span class="fact-number">5</span><div class="fact-icon"><i class="fa-solid fa-hourglass-half"></i></div><div class="fact-content"><h4>נמשך המון זמן</h4><p>עד 100 דקות לליקוי המלא.</p></div></div>
+            <div class="fact-card"><span class="fact-number">6</span><div class="fact-icon"><i class="fa-solid fa-earth-americas"></i></div><div class="fact-content"><h4>נראה מכל הלילה</h4><p>כל מי שבצד החשוך רואה אותו.</p></div></div>
+            <div class="fact-card"><span class="fact-number">7</span><div class="fact-icon"><i class="fa-solid fa-house-chimney"></i></div><div class="fact-content"><h4>לא צריך מיקום מיוחד</h4><p>בניגוד לליקוי חמה הדורש "פס צל" צר.</p></div></div>
+            <div class="fact-card"><span class="fact-number">8</span><div class="fact-icon"><i class="fa-solid fa-flask"></i></div><div class="fact-content"><h4>מידע על האטמוספירה</h4><p>הגוון משתנה לפי כמות האבק והעשן באוויר.</p></div></div>
+            <div class="fact-card"><span class="fact-number">9</span><div class="fact-icon"><i class="fa-regular fa-calendar-check"></i></div><div class="fact-content"><h4>זוגות שמימיים</h4><p>מגיע לרוב שבועיים לפני/אחרי ליקוי חמה.</p></div></div>
+            <div class="fact-card"><span class="fact-number">10</span><div class="fact-icon"><i class="fa-solid fa-bullseye"></i></div><div class="fact-content"><h4>לא תמיד מרכזי</h4><p>יש גם ליקוי חלקי וליקוי עמרי (פנומברלי).</p></div></div>
+        </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img class="lightbox-content" id="lightbox-img">
+    </div>
+
+    <!-- GAME OVERLAY (Hidden by default) -->
+    <div id="gameOverlay" class="game-overlay">
+        <div class="game-header">
+            <h2 style="font-size: 24px;">חידון הליקוי הגדול</h2>
+            <div style="font-size: 20px; color: #fbbf24;">
+                <i class="fa-solid fa-coins"></i> <span id="scoreDisplay">0 ₪</span>
+            </div>
+        </div>
+
+        <!-- Money Ladder -->
+        <div class="game-money-ladder" id="moneyLadder">
+            <!-- JS will populate this -->
+        </div>
+
+        <!-- Question Area -->
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="question-box" id="questionText">
+                השאלה תופיע כאן...
+            </div>
+
+            <div class="answers-grid" id="answersGrid">
+                <!-- JS will populate buttons -->
+            </div>
+            
+            <div id="feedbackText" style="height: 30px; text-align: center; color: #ef4444; font-weight: bold; margin-top: 10px; font-size: 20px;"></div>
+        </div>
+        
+        <button onclick="exitGame()" style="position: absolute; top: 20px; left: 20px; padding: 5px 15px; font-size: 14px; background: rgba(255,255,255,0.1);">יציאה</button>
+    </div>
+
+    <!-- Controls -->
+    <div class="nav-buttons" id="navControls">
+        <button onclick="prevSlide()" id="prevBtn" disabled>הקודם</button>
+        <button onclick="nextSlide()" id="nextBtn">הבא</button>
+    </div>
+    
+    <div class="slide-counter" id="counter">1 / 15</div>
+
+</div>
+
+<script>
+    // --- AUDIO SETUP (Embedded Base64 for Reliability) ---
+    // Generating simple beeps programmatically to ensure they work without external files
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playTone(freq, type, duration) {
+        if (context.state === 'suspended') context.resume();
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, context.currentTime);
+        gain.gain.setValueAtTime(0.1, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(context.destination);
+        osc.start();
+        osc.stop(context.currentTime + duration);
+    }
+
+    function playWinSound() {
+        if (context.state === 'suspended') context.resume();
+        // Simple Arpeggio
+        [440, 554, 659, 880].forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 'sine', 0.5), i * 150);
+        });
+    }
+
+    function playCorrectSound() {
+        playTone(880, 'sine', 0.3); // High Ping
+    }
+
+    function playWrongSound() {
+        playTone(150, 'sawtooth', 0.4); // Low Buzz
+    }
+
+
+    // --- SLIDESHOW LOGIC ---
+    let currentSlide = 1;
+    const totalSlides = 15;
+
+    function showSlide(n) {
+        document.querySelectorAll('.slide').forEach(slide => {
+            slide.classList.remove('active');
+        });
+        
+        const activeSlide = document.getElementById('slide' + n);
+        activeSlide.classList.add('active');
+        document.getElementById('counter').innerText = n + ' / ' + totalSlides;
+        
+        // Scroll to top of slide on change (for mobile)
+        activeSlide.scrollTop = 0;
+
+        // Navigation handling
+        const nav = document.getElementById('navControls');
+        // Slide 12 is choice screen, but we allow navigation now
+        nav.style.display = 'flex';
+
+        document.getElementById('prevBtn').disabled = (n === 1);
+        document.getElementById('nextBtn').innerText = (n === totalSlides) ? 'סיום' : 'הבא';
+        
+        if (n === totalSlides) {
+             document.getElementById('nextBtn').onclick = function() { alert('המצגת הסתיימה בהצלחה!'); };
+        } else {
+             document.getElementById('nextBtn').onclick = nextSlide;
+        }
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides) {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 1) {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+    }
+    
+    // Function for "Presentation Only" choice
+    function goToSlides() {
+        currentSlide = 13; // Jump to facts
+        showSlide(currentSlide);
+    }
+
+    // --- LIGHTBOX LOGIC ---
+    function openLightbox(src) {
+        if(!src) return;
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        img.src = src;
+        lightbox.style.display = 'flex';
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').style.display = 'none';
+    }
+
+    // Close lightbox when clicking outside image
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLightbox();
+        }
+    });
+
+    // --- BACKGROUND ECLIPSE LOGIC (MOUSE & TOUCH) ---
+    function handleInteraction(clientX) {
+        const width = window.innerWidth;
+        // Normalize x from -1 to 1 based on center (offset)
+        const offset = (clientX - width / 2) / (width / 2) * 250; 
+        
+        const moon = document.getElementById('bgMoon');
+        const corona = document.querySelector('.bg-corona');
+        
+        // Apply transform to moon relative to center (-50%, -50% is center)
+        moon.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
+        
+        // Calculate Eclipse State
+        const overlap = Math.abs(offset);
+        
+        if (overlap < 5) {
+            // Total Eclipse
+            corona.style.opacity = 1;
+            document.body.style.backgroundColor = "#000000"; // Darken sky
+        } else if (overlap < 60) {
+            // Partial
+            corona.style.opacity = (60 - overlap) / 200; // Faint glow
+            document.body.style.backgroundColor = "#050510"; // Normal sky
+        } else {
+            corona.style.opacity = 0;
+            document.body.style.backgroundColor = "#050510";
+        }
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        handleInteraction(e.clientX);
+    });
+
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            handleInteraction(e.touches[0].clientX);
+        }
+    }, {passive: true});
+
+    // --- GAME LOGIC ---
+    
+    // מאגר מלא של שאלות המכסה את כל העובדות במצגת
+    const allQuestionsPool = [
+        // Solar Facts 1-7
+        { q: "מדוע השמש והירח נראים כמעט באותו גודל בשמיים?", a: ["כי הם באמת באותו גודל", "השמש גדולה פי 400 אך רחוקה פי 400", "הירח קרוב מאוד ולכן נראה ענק", "זו אשליה שנוצרת בגלל האטמוספירה"], correct: 1 },
+        { q: "מה רוחב רצועת הצל המלא (Umbra) על כדור הארץ?", a: ["100-200 קילומטרים", "5,000 קילומטרים", "חצי כדור הארץ", "10 קילומטרים בלבד"], correct: 0 },
+        { q: "כמה זמן נמשך בדרך כלל ליקוי חמה מלא?", a: ["שעתיים", "2-3 דקות", "חצי יממה", "10 שניות בלבד"], correct: 1 },
+        { q: "מה ניתן לראות בשמיים בזמן ליקוי חמה מלא?", a: ["רק עננים", "כוכבים ואת שכבת הקורונה", "את הצד האפל של הירח", "קשת בענן הפוכה"], correct: 1 },
+        { q: "כיצד מגיבים בעלי חיים בזמן ליקוי מלא?", a: ["מתחילים לרקוד", "מתנהגים כאילו ירד הלילה והולכים לישון", "לא שמים לב בכלל", "בורחים למקורות מים"], correct: 1 },
+        { q: "מה קורה לטמפרטורה בזמן ליקוי מלא?", a: ["היא עולה ב-10 מעלות", "היא יורדת ב-2 עד 5 מעלות", "היא לא משתנה", "היא הופכת לקיצונית מאוד"], correct: 1 },
+        { q: "מי הוכיח את תורת היחסות בעזרת ליקוי חמה ב-1919?", a: ["אייזק ניוטון", "אלברט איינשטיין", "גלילאו גליליי", "ניל ארמסטרונג"], correct: 1 },
+        
+        // Solar Facts 8-13
+        { q: "מהו מחזור סארוס?", a: ["שם של אסטרונום יווני", "מחזור ליקויים של 18 שנים ו-11 ימים", "סוג של טלסקופ עתיק", "יחידת מידה למרחק מכדור הארץ"], correct: 1 },
+        { q: "כל כמה זמן מתרחש ליקוי מלא במקום כלשהו בעולם?", a: ["פעם ב-18 חודשים", "פעם ב-100 שנה", "כל שבוע", "רק פעם אחת בעשור"], correct: 0 },
+        { q: "מה קובע אם הליקוי יהיה מלא או טבעתי?", a: ["מזג האוויר", "המרחק של הירח מכדור הארץ", "השעה ביום", "כמות זיהום האוויר"], correct: 1 },
+        { q: "האם ליקוי חמה מגביר את קרינת השמש?", a: ["כן, זה מאוד מסוכן", "לא, הקרינה רגילה אבל האישון פתוח ומטעה", "רק אם הליקוי חלקי", "תלוי בעונת השנה"], correct: 1 },
+        { q: "מהם 'חרוזי ביילי'?", a: ["שרשרת עתיקה שנמצאה בחלל", "ניצוצות אור המציצים דרך עמקים בירח", "טיפות גשם זוהרות בזמן ליקוי", "שם של קבוצת כוכבים"], correct: 1 },
+        { q: "מתי רואים את 'טבעת היהלום'?", a: ["ממש לפני או אחרי השיא של ליקוי מלא", "בזמן ליקוי ירח", "רק בבוקר", "כשכוכב נוגה עובר מול השמש"], correct: 0 },
+
+        // Lunar Facts 1-10
+        { q: "באיזה שלב של הירח מתרחש ליקוי ירח?", a: ["ירח חדש (מולד)", "ירח מלא בלבד", "חצי ירח", "בכל שלב בחודש"], correct: 1 },
+        { q: "האם בטוח להביט בליקוי ירח בעיניים חשופות?", a: ["לא, זה מסוכן כמו שמש", "כן, זה בטוח לחלוטין", "רק עם משקפי שמש", "רק דרך מצלמה מיוחדת"], correct: 1 },
+        { q: "מדוע הירח נראה אדום בזמן ליקוי ירח?", a: ["כי הוא לוהט", "בגלל שבירת אור באטמוספירת כדור הארץ", "כי המאדים משתקף עליו", "זו אשליה אופטית של העין"], correct: 1 },
+        { q: "מה קורה כשהירח נכנס עמוק לתוך הצל?", a: ["הוא נעלם לגמרי", "הוא יכול להיראות כהה מאוד", "הוא הופך לכחול", "הוא מתחיל להסתובב מהר יותר"], correct: 1 },
+        { q: "כמה זמן יכול להימשך ליקוי ירח מלא?", a: ["כמה דקות", "עד 100 דקות (יותר משעה וחצי)", "כל הלילה", "חצי דקה בלבד"], correct: 1 },
+        { q: "מי יכול לראות ליקוי ירח?", a: ["רק מי שנמצא בקו הצל", "כל מי שנמצא בצד הלילה של כדור הארץ", "רק מדענים", "רק מי שנמצא בקו המשווה"], correct: 1 },
+        { q: "האם צריך להיות במיקום ספציפי לראות ליקוי ירח?", a: ["כן, רצועה צרה", "לא, מספיק שיהיה לילה אצלך", "רק בחצי הכדור הדרומי", "רק על הרים גבוהים"], correct: 1 },
+        { q: "מה ניתן ללמוד מצבע הירח בזמן הליקוי?", a: ["מה השעה", "מידע על האטמוספירה (אבק, עשן)", "את גיל הירח", "את המרחק המדויק מהשמש"], correct: 1 },
+        { q: "איך ליקוי ירח קשור לליקוי חמה?", a: ["הם לא קשורים", "הם מגיעים לרוב בזוגות בהפרש של שבועיים", "הם קורים באותו יום", "ליקוי ירח גורם לליקוי חמה"], correct: 1 },
+        { q: "מהו ליקוי ירח 'פנומברלי' (עמרי)?", a: ["ליקוי מלא וכהה", "כשהירח עובר רק בצל החלקי ומתכהה מעט", "כשהירח מסתיר את השמש", "ליקוי שקורה ביום"], correct: 1 }
+    ];
+
+    const moneySteps = [
+        "100 ₪", "500 ₪", "1,000 ₪", "2,000 ₪", "5,000 ₪", 
+        "10,000 ₪", "32,000 ₪", "64,000 ₪", "125,000 ₪", "500,000 ₪", "1,000,000 ₪"
+    ];
+
+    let currentQIndex = 0;
+    let gameActive = false;
+    let currentGameQuestions = [];
+
+    // פונקציה לערבוב מערך (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startGame() {
+        document.getElementById('gameOverlay').style.display = 'flex';
+        currentQIndex = 0;
+        gameActive = true;
+        
+        // בחירת שאלות רנדומליות למשחק הנוכחי
+        let shuffledPool = shuffleArray([...allQuestionsPool]); 
+        currentGameQuestions = shuffledPool.slice(0, 11); 
+
+        // הפעלת אודיו הקשר בפעם הראשונה כדי לאפשר ניגון בדפדפנים שחוסמים autoplay
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+
+        renderMoneyLadder();
+        loadQuestion();
+    }
+
+    function renderMoneyLadder() {
+        const ladder = document.getElementById('moneyLadder');
+        ladder.innerHTML = '';
+        moneySteps.forEach((amount, index) => {
+            const step = document.createElement('div');
+            step.className = 'money-step';
+            if (index === currentQIndex) step.classList.add('active');
+            if (index < currentQIndex) step.classList.add('completed');
+            step.innerText = amount;
+            ladder.appendChild(step);
+        });
+        
+        // Scroll ladder to right on mobile
+        ladder.scrollLeft = ladder.scrollWidth;
+    }
+
+    function loadQuestion() {
+        const q = currentGameQuestions[currentQIndex];
+        document.getElementById('questionText').innerText = q.q;
+        document.getElementById('feedbackText').innerText = '';
+        
+        const grid = document.getElementById('answersGrid');
+        grid.innerHTML = '';
+        
+        const letters = ["א", "ב", "ג", "ד"];
+        
+        // יצירת מערך תשובות משוכלל (טקסט + האם נכון)
+        let answers = q.a.map((text, index) => {
+            return { text: text, isCorrect: index === q.correct };
+        });
+        
+        // ערבוב התשובות
+        answers = shuffleArray(answers);
+        
+        // יצירת הכפתורים
+        answers.forEach((ans, idx) => {
+            const btn = document.createElement('div');
+            btn.className = 'answer-btn';
+            btn.innerHTML = `<span class="answer-letter">${letters[idx]}.</span> ${ans.text}`;
+            
+            // בדיקה האם זו התשובה הנכונה
+            btn.onclick = () => checkAnswer(ans.isCorrect, btn);
+            grid.appendChild(btn);
+        });
+        
+        renderMoneyLadder();
+        const currentMoney = currentQIndex > 0 ? moneySteps[currentQIndex-1] : "0 ₪";
+        document.getElementById('scoreDisplay').innerText = currentMoney;
+    }
+
+    function checkAnswer(isCorrect, btnElement) {
+        if (!gameActive) return;
+
+        if (isCorrect) {
+            // Correct
+            btnElement.classList.add('correct');
+            playCorrectSound();
+            
+            setTimeout(() => {
+                currentQIndex++;
+                if (currentQIndex >= currentGameQuestions.length) {
+                    winGame();
+                } else {
+                    loadQuestion();
+                }
+            }, 1200); 
+        } else {
+            // Wrong
+            btnElement.classList.add('wrong');
+            playWrongSound();
+            document.getElementById('feedbackText').innerText = 'טעות... נסה שוב!';
+            setTimeout(() => {
+                btnElement.classList.remove('wrong');
+            }, 600);
+        }
+    }
+
+    function winGame() {
+        gameActive = false;
+        playWinSound();
+        
+        document.getElementById('moneyLadder').style.display = 'none';
+        document.getElementById('answersGrid').innerHTML = '';
+        document.getElementById('scoreDisplay').innerText = "1,000,000 ₪";
+        
+        const box = document.getElementById('questionText');
+        box.style.flexDirection = "column";
+        box.innerHTML = `
+            <i class="fa-solid fa-trophy" style="font-size: 80px; color: #fbbf24; margin-bottom:20px;"></i>
+            <h2 style="border:none;">כל הכבוד גאונים!</h2>
+            <p style="font-size: 24px;">הוכחתם שאתם לא רק מחוננים, אתם מאורות הגדולים!</p>
+            <p style="font-size: 20px; color: #fbbf24; margin-top: 15px;">(המיליון שקלים הועברו לחשבון שלכם... בביטקוין דמיוני שנע במהירות האור)</p>
+        `;
+        box.style.borderColor = "#fbbf24";
+        box.style.boxShadow = "0 0 50px #fbbf24";
+        
+        const finishBtn = document.createElement('button');
+        finishBtn.innerText = "חזרה למצגת";
+        finishBtn.onclick = exitGame;
+        finishBtn.style.marginTop = "20px";
+        finishBtn.style.padding = "10px 30px";
+        finishBtn.style.borderRadius = "30px";
+        finishBtn.style.border = "none";
+        finishBtn.style.background = "linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)";
+        finishBtn.style.color = "white";
+        finishBtn.style.fontSize = "18px";
+        finishBtn.style.fontWeight = "bold";
+        finishBtn.style.cursor = "pointer";
+        
+        document.getElementById('answersGrid').appendChild(finishBtn);
+    }
+
+    function exitGame() {
+        document.getElementById('gameOverlay').style.display = 'none';
+        // חזרה לשקף בחירה או המשך לעובדות
+        currentSlide = 13;
+        showSlide(currentSlide);
+    }
+
+</script>
+
+</body>
+</html>
